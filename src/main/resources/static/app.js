@@ -105,7 +105,18 @@ function CallApp({ roomId, autoJoin }) {
 
     async function ensurePeer() {
         if (peer.current) return;
-        peer.current = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        peer.current = new RTCPeerConnection({
+            iceServers: [
+                {
+                    urls: [
+                        'turn:turn.talkme.bilalarshad.pro:3478?transport=udp',
+                        'turn:turn.talkme.bilalarshad.pro:3478?transport=tcp'
+                    ],
+                    username: 'talkme',
+                    credential: 'FVzFo1AwV6x5goeCiJMFCRJqfNZqb5jJATTCyLqyxWo'
+                }
+            ]
+        });
         stream.current?.getTracks().forEach(track => peer.current.addTrack(track, stream.current));
         peer.current.ontrack = event => { if (remoteVideo.current) remoteVideo.current.srcObject = event.streams[0]; setConnected(true); };
         peer.current.onicecandidate = event => event.candidate && send({ type: 'candidate', candidate: event.candidate });
