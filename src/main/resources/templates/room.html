@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A private Talkme video and voice call room.">
+    <title>Talkme call room</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="room-page">
+<main id="call-app" th:attr="data-room-id=${roomId},data-auto-join=${autoJoin}">
+    <noscript>Talkme needs JavaScript enabled to start a call.</noscript>
+    <section class="call-fallback">
+        <p class="eyebrow">Talkme room</p>
+        <h1>Your private call is ready.</h1>
+        <p>Enable JavaScript to connect your camera or microphone.</p>
+    </section>
+</main>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="/app.js?v=two-peer-1"></script>
+</body>
+</html>

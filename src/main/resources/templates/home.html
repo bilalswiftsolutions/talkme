@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Talkme is a simple, private video and voice call room you can share with anyone.">
+    <title>Talkme | Simple calls, no account needed</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="landing-page">
+<main class="landing-shell">
+    <nav class="topbar" aria-label="Main navigation">
+        <a class="brand" href="/" aria-label="Talkme home"><span class="brand-mark">t</span> talkme</a>
+        <span class="topbar-note">private by design</span>
+    </nav>
+    <section class="landing-hero">
+        <div class="hero-copy">
+            <p class="eyebrow">A quieter way to connect</p>
+            <h1>Meet face to face.<br><em>Keep it simple.</em></h1>
+            <p class="hero-description">Start a private video or voice room, send the link, and talk. No accounts, no feeds, no fuss.</p>
+            <form class="name-form" action="/rooms" method="post" onsubmit="localStorage.setItem('talkme.name', this.elements.name.value.trim())">
+                <label for="display-name">Your name</label>
+                <input id="display-name" name="name" type="text" maxlength="40" placeholder="Enter your name" autocomplete="name" required>
+                <div class="call-actions">
+                    <button class="primary-button" type="submit">Start a new call <span aria-hidden="true">&#8594;</span></button>
+                    <button class="history-jump" id="history-jump" type="button" hidden>Call history</button>
+                </div>
+            </form>
+            <p class="microcopy">Your room is created instantly and disappears when you leave.</p>
+            <section class="call-history" id="call-history" aria-labelledby="history-title" hidden>
+                <div class="history-heading">
+                    <div>
+                        <p class="eyebrow">Your recent calls</p>
+                        <h2 id="history-title">Pick up where you left off.</h2>
+                    </div>
+                    <button class="text-button" id="clear-history" type="button">Clear history</button>
+                </div>
+                <div class="history-list" id="history-list"></div>
+                <p class="history-note">Saved only in this browser.</p>
+            </section>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="signal-card">
+                <span class="signal-dot"></span>
+                <span>room ready</span>
+                <span class="signal-wave">)))</span>
+            </div>
+            <div class="face face-one"><span></span></div>
+            <div class="face face-two"><span></span></div>
+            <div class="connecting-line"></div>
+        </div>
+    </section>
+    <footer class="landing-footer">
+        <span>Built for conversations that matter.</span>
+        <span>Audio and video stay peer-to-peer.</span>
+    </footer>
+</main>
+<script src="/history.js"></script>
+</body>
+</html>
