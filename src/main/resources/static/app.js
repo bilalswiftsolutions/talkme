@@ -34,6 +34,8 @@ function CallApp({ roomId, autoJoin }) {
     const stream = useRef(null);
     const pendingCandidates = useRef([]);
     const controlsTimer = useRef(null);
+    const stage = useRef(null);
+    const drag = useRef({ active: false, moved: false });
     const [connected, setConnected] = useState(false);
     const [displayName, setDisplayName] = useState(() => localStorage.getItem('talkme.name') || '');
     const [remoteName, setRemoteName] = useState('');
@@ -45,6 +47,7 @@ function CallApp({ roomId, autoJoin }) {
     const [shareHintVisible, setShareHintVisible] = useState(() => autoJoin && window.innerWidth <= 720 && localStorage.getItem(shareHintKey) !== 'true');
     const [controlsVisible, setControlsVisible] = useState(true);
     const [localIsMain, setLocalIsMain] = useState(false);
+    const [previewPosition, setPreviewPosition] = useState(null);
 
     useEffect(() => {
         if (!started || !displayName) return undefined;
@@ -145,6 +148,31 @@ function CallApp({ roomId, autoJoin }) {
     async function copyLink() { await navigator.clipboard.writeText(roomUrl); localStorage.setItem(shareHintKey, 'true'); setShareHintVisible(false); setCopied(true); setTimeout(() => setCopied(false), 1800); }
     function leave() { stream.current?.getTracks().forEach(track => track.stop()); window.location.href = '/'; }
     function revealControls() { setControlsVisible(true); clearTimeout(controlsTimer.current); controlsTimer.current = setTimeout(() => setControlsVisible(false), 5000); }
+    function startPreviewDrag(event) {
+        const stageBox = stage.current.getBoundingClientRect();
+        const tileBox = event.currentTarget.getBoundingClientRect();
+        drag.current = { active: true, moved: false, startX: event.clientX, startY: event.clientY, offsetX: event.clientX - tileBox.left, offsetY: event.clientY - tileBox.top, stageBox, tileWidth: tileBox.width, tileHeight: tileBox.height };
+        event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    function movePreview(event) {
+        if (!drag.current.active) return;
+        const { stageBox, tileWidth, tileHeight, offsetX, offsetY, startX, startY } = drag.current;
+        const left = Math.max(8, Math.min(event.clientX - stageBox.left - offsetX, stageBox.width - tileWidth - 8));
+        const top = Math.max(8, Math.min(event.clientY - stageBox.top - offsetY, stageBox.height - tileHeight - 8));
+        if (Math.abs(event.clientX - startX) > 4 || Math.abs(event.clientY - startY) > 4) drag.current.moved = true;
+        setPreviewPosition({ left, top });
+    }
+    function endPreviewDrag() { drag.current.active = false; }
+    function previewStyle(isSmallVideo) {
+        if (!isSmallVideo || window.innerWidth > 720) return undefined;
+        if (previewPosition) return { left: `${previewPosition.left}px`, top: `${previewPosition.top}px`, right: 'auto', bottom: 'auto' };
+        return { bottom: controlsVisible ? '84px' : '16px' };
+    }
+    function swapVideos() {
+        if (drag.current.moved) { drag.current.moved = false; return; }
+        setLocalIsMain(current => !current);
+        setPreviewPosition(null);
+    }
     function joinWithName(event) { event.preventDefault(); const name = displayName.trim(); if (!name) return; localStorage.setItem('talkme.name', name); setDisplayName(name); setStarted(true); }
 
     if (!started) return React.createElement('main', { className: 'name-gate' },
@@ -163,9 +191,9 @@ function CallApp({ roomId, autoJoin }) {
 
     return React.createElement('div', { className: 'room-shell', onPointerDown: revealControls },
         React.createElement('header', { className: 'room-top' }, React.createElement('a', { className: 'brand', href: '/' }, React.createElement('span', { className: 'brand-mark' }, 't'), ' talkme'), React.createElement('div', { className: 'room-status' }, React.createElement('span', { className: 'status-dot' }), connected ? 'connected' : 'waiting for someone')),
-        React.createElement('section', { className: 'stage' },
-            React.createElement('div', { className: `video-tile remote-video ${localIsMain ? 'small-video' : 'main-video'}`, onClick: localIsMain ? () => setLocalIsMain(false) : undefined }, React.createElement('video', { ref: remoteVideo, autoPlay: true, playsInline: true }), !connected && React.createElement('div', { className: 'video-empty' }, 'waiting for someone'), React.createElement('span', { className: 'video-label' }, remoteName || 'Guest')),
-            React.createElement('div', { className: `video-tile local-video ${localIsMain ? 'main-video' : 'small-video'}`, onClick: !localIsMain ? () => setLocalIsMain(true) : undefined }, React.createElement('video', { ref: localVideo, autoPlay: true, muted: true, playsInline: true }), React.createElement('span', { className: 'video-label' }, displayName)),
+        React.createElement('section', { className: 'stage', ref: stage },
+            React.createElement('div', { className: `video-tile remote-video ${localIsMain ? 'small-video' : 'main-video'}`, style: previewStyle(localIsMain), onClick: localIsMain ? swapVideos : undefined, onPointerDown: localIsMain ? startPreviewDrag : undefined, onPointerMove: localIsMain ? movePreview : undefined, onPointerUp: localIsMain ? endPreviewDrag : undefined }, React.createElement('video', { ref: remoteVideo, autoPlay: true, playsInline: true }), !connected && React.createElement('div', { className: 'video-empty' }, 'waiting for someone'), React.createElement('span', { className: 'video-label' }, remoteName || 'Guest')),
+            React.createElement('div', { className: `video-tile local-video ${localIsMain ? 'main-video' : 'small-video'}`, style: previewStyle(!localIsMain), onClick: !localIsMain ? swapVideos : undefined, onPointerDown: !localIsMain ? startPreviewDrag : undefined, onPointerMove: !localIsMain ? movePreview : undefined, onPointerUp: !localIsMain ? endPreviewDrag : undefined }, React.createElement('video', { ref: localVideo, autoPlay: true, muted: true, playsInline: true }), React.createElement('span', { className: 'video-label' }, displayName)),
             shareHintVisible && React.createElement('div', { className: `mobile-share-hint ${controlsVisible ? '' : 'hint-hidden'}` }, 'Copy the link below to invite someone'),
             React.createElement('div', { className: `controls ${controlsVisible ? 'controls-visible' : 'controls-hidden'}` },
                 React.createElement('button', { className: `control-button ${muted ? 'active' : ''}`, onClick: toggleAudio, title: muted ? 'Unmute microphone' : 'Mute microphone', 'aria-label': muted ? 'Unmute microphone' : 'Mute microphone' }, React.createElement(Icon, { name: muted ? 'micOff' : 'mic' })),
