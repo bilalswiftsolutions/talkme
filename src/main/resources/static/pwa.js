@@ -1,5 +1,5 @@
 (function () {
-    const dismissedKey = 'talkme.pwaInstallDismissed.v2';
+    const dismissedKey = 'talkme.pwaInstallDismissed.v3';
     let deferredPrompt;
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
