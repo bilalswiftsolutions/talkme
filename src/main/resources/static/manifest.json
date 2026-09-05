@@ -1,0 +1,24 @@
+{
+  "name": "Talkme",
+  "short_name": "Talkme",
+  "description": "Private browser video calls.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#202225",
+  "theme_color": "#ff6847",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

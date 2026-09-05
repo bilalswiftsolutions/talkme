@@ -35,6 +35,17 @@ public class SignalingHandler extends TextWebSocketHandler {
 		if (room == null) {
 			return;
 		}
+		if (isLeaveMessage(message)) {
+			notifyPeerLeft(room, session);
+			session.getAttributes().put("leaveNotified", true);
+			removeSession(session);
+			try {
+				session.close();
+			} catch (Exception ignored) {
+				// The browser may already have closed the connection.
+			}
+			return;
+		}
 		String name = joinName(message);
 		if (name != null) {
 			session.getAttributes().put("name", name);
@@ -52,12 +63,25 @@ public class SignalingHandler extends TextWebSocketHandler {
 
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+		notifyIfNeeded(session);
 		removeSession(session);
 	}
 
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) {
+		notifyIfNeeded(session);
 		removeSession(session);
+	}
+
+	private void notifyIfNeeded(WebSocketSession session) {
+		if (Boolean.TRUE.equals(session.getAttributes().get("leaveNotified"))) {
+			return;
+		}
+		String roomId = (String) session.getAttributes().get("roomId");
+		Map<String, WebSocketSession> room = rooms.get(roomId);
+		if (room != null) {
+			notifyPeerLeft(room, session);
+		}
 	}
 
 	private void removeSession(WebSocketSession session) {
@@ -74,6 +98,13 @@ public class SignalingHandler extends TextWebSocketHandler {
 		}
 	}
 
+	private void notifyPeerLeft(Map<String, WebSocketSession> room, WebSocketSession session) {
+		TextMessage message = new TextMessage("{\"type\":\"peer-left\"}");
+		room.values().stream()
+				.filter(peer -> !peer.getId().equals(session.getId()) && peer.isOpen())
+				.forEach(peer -> send(peer, message));
+	}
+
 	private void send(WebSocketSession session, TextMessage message) {
 		try {
 			session.sendMessage(message);
@@ -88,6 +119,10 @@ public class SignalingHandler extends TextWebSocketHandler {
 			return null;
 		}
 		return matcher.group(1).replace("\\\\", "\\").replace("\\\"", "\"");
+	}
+
+	private boolean isLeaveMessage(TextMessage message) {
+		return message.getPayload().contains("\"type\":\"leave\"");
 	}
 
 	private TextMessage nameMessage(String name) {

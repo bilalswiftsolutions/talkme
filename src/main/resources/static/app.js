@@ -71,6 +71,10 @@ function CallApp({ roomId, autoJoin }) {
                 setRemoteName(message.name || 'Guest');
                 saveCallHistory(roomId, displayName, message.name || 'Guest');
                 await makeOffer();
+            } else if (message.type === 'peer-left') {
+                stream.current?.getTracks().forEach(track => track.stop());
+                peer.current?.close();
+                window.location.href = '/';
             } else if (message.type === 'offer') {
                 await ensurePeer();
                 if (peer.current.signalingState !== 'stable') return;
@@ -146,7 +150,13 @@ function CallApp({ roomId, autoJoin }) {
         screen.getVideoTracks()[0].onended = () => sender?.replaceTrack(stream.current?.getVideoTracks()[0]);
     }
     async function copyLink() { await navigator.clipboard.writeText(roomUrl); localStorage.setItem(shareHintKey, 'true'); setShareHintVisible(false); setCopied(true); setTimeout(() => setCopied(false), 1800); }
-    function leave() { stream.current?.getTracks().forEach(track => track.stop()); window.location.href = '/'; }
+    function leave() {
+        send({ type: 'leave' });
+        stream.current?.getTracks().forEach(track => track.stop());
+        peer.current?.close();
+        socket.current?.close();
+        window.location.href = '/';
+    }
     function revealControls() { setControlsVisible(true); clearTimeout(controlsTimer.current); controlsTimer.current = setTimeout(() => setControlsVisible(false), 5000); }
     function startPreviewDrag(event) {
         event.preventDefault();
