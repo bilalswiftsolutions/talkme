@@ -16,14 +16,14 @@
         deferredPrompt.prompt();
         deferredPrompt.userChoice.finally(() => {
             deferredPrompt = null;
-            document.querySelectorAll('.pwa-install-button, .pwa-install-prompt').forEach(element => element.hidden = true);
+            document.querySelectorAll('.pwa-install-button, .pwa-install-prompt').forEach(element => element.remove());
         });
     }
 
     function dismissPrompt() {
         localStorage.setItem(dismissedKey, 'true');
         const prompt = document.querySelector('.pwa-install-prompt');
-        if (prompt) prompt.hidden = true;
+        if (prompt) prompt.remove();
     }
 
     function createPrompt() {
@@ -47,7 +47,7 @@
     createPrompt();
     window.addEventListener('appinstalled', () => {
         deferredPrompt = null;
-        document.querySelectorAll('.pwa-install-button, .pwa-install-prompt').forEach(element => element.hidden = true);
+        document.querySelectorAll('.pwa-install-button, .pwa-install-prompt').forEach(element => element.remove());
     });
     document.addEventListener('click', event => {
         if (event.target.closest('.pwa-install-button')) installApp();
